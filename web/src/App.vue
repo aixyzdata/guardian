@@ -1,5 +1,5 @@
 <template>
-  <div class="canonika-app">
+  <div id="app" class="canonika-app">
     <!-- Header futurista -->
     <header class="canonika-header">
       <div class="header-content">
@@ -10,98 +10,99 @@
           </div>
           <div class="logo-text-container">
             <h1 class="logo-text">CANONIKA</h1>
-            <span class="logo-subtitle">GUARDIAN</span>
+            <div class="module-title-with-icon">
+              <div :class="['module-icon', serviceConfig.iconClass]"></div>
+              <span class="logo-subtitle">{{ serviceConfig.name }}</span>
+            </div>
           </div>
         </div>
         <div class="header-actions">
+          <div v-if="user" class="user-info">
+            <div class="user-avatar">
+              <span>{{ user.name.charAt(0).toUpperCase() }}</span>
+            </div>
+            <span class="user-name">{{ user.name }}</span>
+            <div class="user-menu">
+              <button @click="logout" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Sair
+              </button>
+            </div>
+          </div>
           <div class="system-status">
             <div class="status-indicator online"></div>
             <span>ONLINE</span>
           </div>
-          <button @click="logout" class="logout-btn">
-            <i class="fas fa-sign-out-alt"></i>
-            SAIR
-          </button>
         </div>
       </div>
       <div class="header-glow"></div>
     </header>
 
-    <div class="canonika-layout">
+    <div class="canonika-layout" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
+      <!-- Toggle button para menu retrátil -->
+      <button 
+        v-if="user" 
+        @click="toggleSidebar" 
+        class="sidebar-toggle"
+        :class="{ 'sidebar-collapsed': sidebarCollapsed }"
+      >
+        <i class="fas fa-bars"></i>
+      </button>
+
       <!-- Sidebar futurista -->
-      <nav class="canonika-sidebar">
+      <nav class="canonika-sidebar" v-if="user" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
         <div class="sidebar-header">
           <div class="nav-icon active">
             <i class="nav-dot"></i>
-            <span>SEGURANÇA</span>
+            <span v-if="!sidebarCollapsed">SEGURANÇA</span>
           </div>
         </div>
+        
         <ul class="nav-menu">
-          <li class="nav-item" :class="{ active: currentView === 'dashboard' }">
-            <div class="nav-link" @click="setView('dashboard')">
-              <div class="nav-icon">
-                <i class="fas fa-tachometer-alt"></i>
+          <!-- Menu items dinâmicos baseados na configuração -->
+          <template v-for="menuItem in serviceConfig.menuItems" :key="menuItem.id">
+            <!-- Item simples -->
+            <li v-if="!menuItem.submenu" class="nav-item" :class="{ active: currentView === menuItem.id }">
+              <div class="nav-link" @click="setView(menuItem.id)">
+                <div class="nav-icon">
+                  <i :class="menuItem.icon"></i>
+                </div>
+                <div v-if="!sidebarCollapsed" class="nav-text">
+                  <span class="nav-title">{{ menuItem.title }}</span>
+                  <span v-if="menuItem.subtitle" class="service-subtitle">{{ menuItem.subtitle }}</span>
+                </div>
               </div>
-              <div class="nav-text">
-                <span class="nav-title">Dashboard</span>
+            </li>
+            
+            <!-- Item com submenu -->
+            <li v-else class="nav-item" :class="{ active: openSubmenus[menuItem.id] }">
+              <div class="nav-link" @click="toggleSubmenu(menuItem.id)">
+                <div class="nav-icon">
+                  <i :class="menuItem.icon"></i>
+                </div>
+                <div v-if="!sidebarCollapsed" class="nav-text">
+                  <span class="nav-title">{{ menuItem.title }}</span>
+                  <span v-if="menuItem.subtitle" class="service-subtitle">{{ menuItem.subtitle }}</span>
+                </div>
+                <i v-if="!sidebarCollapsed" :class="openSubmenus[menuItem.id] ? 'fas fa-chevron-down' : 'fas fa-chevron-right'" class="submenu-icon"></i>
               </div>
-            </div>
-          </li>
-          <li class="nav-item" :class="{ active: currentView === 'keycloak' }">
-            <div class="nav-link" @click="setView('keycloak')">
-              <div class="nav-icon">
-                <i class="fas fa-users-cog"></i>
-              </div>
-              <div class="nav-text">
-                <span class="nav-title">Keycloak Admin</span>
-                <span class="service-subtitle">Gestão de Usuários</span>
-              </div>
-            </div>
-          </li>
-          <li class="nav-item" :class="{ active: currentView === 'autenticacao' }">
-            <div class="nav-link" @click="setView('autenticacao')">
-              <div class="nav-icon">
-                <i class="fas fa-key"></i>
-              </div>
-              <div class="nav-text">
-                <span class="nav-title">Autenticação</span>
-                <span class="service-subtitle">Login & MFA</span>
-              </div>
-            </div>
-          </li>
-          <li class="nav-item" :class="{ active: currentView === 'autorizacao' }">
-            <div class="nav-link" @click="setView('autorizacao')">
-              <div class="nav-icon">
-                <i class="fas fa-shield-alt"></i>
-              </div>
-              <div class="nav-text">
-                <span class="nav-title">Autorização</span>
-                <span class="service-subtitle">OPA & Políticas</span>
-              </div>
-            </div>
-          </li>
-          <li class="nav-item" :class="{ active: currentView === 'sessoes' }">
-            <div class="nav-link" @click="setView('sessoes')">
-              <div class="nav-icon">
-                <i class="fas fa-clock"></i>
-              </div>
-              <div class="nav-text">
-                <span class="nav-title">Sessões</span>
-                <span class="service-subtitle">Controle Ativo</span>
-              </div>
-            </div>
-          </li>
-          <li class="nav-item" :class="{ active: currentView === 'auditoria' }">
-            <div class="nav-link" @click="setView('auditoria')">
-              <div class="nav-icon">
-                <i class="fas fa-file-alt"></i>
-              </div>
-              <div class="nav-text">
-                <span class="nav-title">Auditoria</span>
-                <span class="service-subtitle">Logs & Relatórios</span>
-              </div>
-            </div>
-          </li>
+              
+              <!-- Submenu -->
+              <ul v-if="!sidebarCollapsed" class="nav flex-column submenu" :class="{ show: openSubmenus[menuItem.id] }">
+                <li v-for="subItem in menuItem.submenu" :key="subItem.id" class="nav-item">
+                  <div class="nav-link" @click="setView(subItem.id)">
+                    <div class="nav-icon">
+                      <i :class="subItem.icon"></i>
+                    </div>
+                    <div class="nav-text">
+                      <div class="nav-title">{{ subItem.title }}</div>
+                      <div v-if="subItem.subtitle" class="service-subtitle">{{ subItem.subtitle }}</div>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </li>
+          </template>
         </ul>
       </nav>
 
@@ -304,6 +305,53 @@ export default {
   data() {
     return {
       currentView: 'dashboard',
+      sidebarCollapsed: false,
+      openSubmenus: {},
+      
+      // Configuração do serviço Guardian
+      serviceConfig: {
+        name: 'GUARDIAN',
+        iconClass: 'fas fa-shield-alt',
+        menuItems: [
+          {
+            id: 'dashboard',
+            title: 'Dashboard',
+            icon: 'fas fa-tachometer-alt',
+            subtitle: 'Visão Geral'
+          },
+          {
+            id: 'keycloak',
+            title: 'Keycloak Admin',
+            icon: 'fas fa-users-cog',
+            subtitle: 'Gestão de Usuários'
+          },
+          {
+            id: 'autenticacao',
+            title: 'Autenticação',
+            icon: 'fas fa-key',
+            subtitle: 'Login & MFA'
+          },
+          {
+            id: 'autorizacao',
+            title: 'Autorização',
+            icon: 'fas fa-shield-alt',
+            subtitle: 'OPA & Políticas'
+          },
+          {
+            id: 'sessoes',
+            title: 'Sessões',
+            icon: 'fas fa-clock',
+            subtitle: 'Controle Ativo'
+          },
+          {
+            id: 'auditoria',
+            title: 'Auditoria',
+            icon: 'fas fa-file-alt',
+            subtitle: 'Logs & Relatórios'
+          }
+        ]
+      },
+      
       user: {
         id: 'admin-001',
         name: 'Administrador',
@@ -344,6 +392,14 @@ export default {
   methods: {
     setView(view) {
       this.currentView = view
+    },
+    
+    toggleSidebar() {
+      this.sidebarCollapsed = !this.sidebarCollapsed
+    },
+    
+    toggleSubmenu(menuId) {
+      this.$set(this.openSubmenus, menuId, !this.openSubmenus[menuId])
     },
     
     logout() {
