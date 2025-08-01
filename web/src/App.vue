@@ -183,6 +183,7 @@
 
 <script>
 import MasterPage from './components/MasterPage.vue'
+import config from './config/env.js'
 
 export default {
   name: 'App',
@@ -288,21 +289,76 @@ export default {
     handleLogout() {
       this.user = null
       console.log('Usuário deslogado')
-      // Redirecionar para Quarter (ponto de entrada)
-      window.location.href = 'http://localhost:3704'
+      // Redirecionar para Quarter usando configuração
+      const quarterUrl = config.getServiceUrl('quarter')
+      window.location.href = quarterUrl
+    },
+
+    // Métodos para comunicação com outros serviços
+    async checkServiceHealth(serviceName) {
+      const healthUrl = config.buildHealthUrl(serviceName)
+      try {
+        const response = await fetch(healthUrl)
+        return response.ok
+      } catch (error) {
+        console.error(`Erro ao verificar ${serviceName}:`, error)
+        return false
+      }
+    },
+
+    async getKeycloakUsers() {
+      const keycloakUrl = config.getInfraUrl('keycloak')
+      const usersUrl = `${keycloakUrl}/auth/admin/realms/canonika/users`
+      try {
+        const response = await fetch(usersUrl)
+        return await response.json()
+      } catch (error) {
+        console.error('Erro ao buscar usuários do Keycloak:', error)
+        return []
+      }
+    },
+
+    async getHarborMetrics() {
+      const harborUrl = config.getServiceUrl('harbor')
+      const metricsUrl = `${harborUrl}/api/metrics`
+      try {
+        const response = await fetch(metricsUrl)
+        return await response.json()
+      } catch (error) {
+        console.error('Erro ao buscar métricas do Harbor:', error)
+        return {}
+      }
     },
     
-    refreshStatus() {
-      // Implementar refresh do status dos serviços
+    async refreshStatus() {
       console.log('Atualizando status dos serviços...')
+      
+      // Verificar saúde de todos os serviços
+      const services = ['quarter', 'harbor', 'skipper', 'beacon', 'fisher', 'tollgate', 'ledger']
+      const healthChecks = await Promise.allSettled(
+        services.map(service => this.checkServiceHealth(service))
+      )
+      
+      // Atualizar status dos serviços
+      this.serviceStatus = services.map((service, index) => {
+        const isHealthy = healthChecks[index].status === 'fulfilled' && healthChecks[index].value
+        return {
+          name: service.toUpperCase(),
+          status: isHealthy ? 'online' : 'offline',
+          statusText: isHealthy ? 'ONLINE' : 'OFFLINE',
+          icon: this.getServiceIcon(service)
+        }
+      })
     },
     
     openKeycloakAdmin() {
-      window.open('http://localhost:8080/admin', '_blank')
+      const keycloakUrl = config.getInfraUrl('keycloak')
+      window.open(`${keycloakUrl}/admin`, '_blank')
     },
     
     openOPA() {
-      window.open('http://localhost:8181', '_blank')
+      const opaUrl = config.getInfraUrl('opa')
+      window.open(opaUrl, '_blank')
     },
     
     viewAuditLogs() {
@@ -322,7 +378,35 @@ export default {
     terminateSession(sessionId) {
       // Implementar encerramento de sessão
       this.activeSessions = this.activeSessions.filter(s => s.id !== sessionId)
+    },
+
+    getServiceIcon(serviceName) {
+      const icons = {
+        'quarter': 'fas fa-home',
+        'harbor': 'fas fa-anchor',
+        'guardian': 'fas fa-shield-alt',
+        'skipper': 'fas fa-compass',
+        'beacon': 'fas fa-broadcast-tower',
+        'fisher': 'fas fa-fish',
+        'tollgate': 'fas fa-door-open',
+        'ledger': 'fas fa-book'
+      }
+      return icons[serviceName.toLowerCase()] || 'fas fa-cog'
     }
+  },
+
+    mounted() {
+    // Inicializar status dos serviços
+    this.refreshStatus()
+    
+    // Verificar configurações
+    console.log('Configurações carregadas:', {
+      quarter: config.getServiceUrl('quarter'),
+      harbor: config.getServiceUrl('harbor'),
+      guardian: config.getServiceUrl('guardian'),
+      keycloak: config.getInfraUrl('keycloak'),
+      opa: config.getInfraUrl('opa')
+    })
   }
 }
 </script>
