@@ -1,112 +1,10 @@
 <template>
-  <div class="canonika-app">
-    <!-- Header futurista -->
-    <header class="canonika-header">
-      <div class="header-content">
-        <div class="logo-section">
-          <div class="logo-icon">
-            <div class="logo-hexagon"></div>
-            <div class="logo-pulse"></div>
-          </div>
-          <div class="logo-text-container">
-            <h1 class="logo-text">CANONIKA</h1>
-            <span class="logo-subtitle">GUARDIAN</span>
-          </div>
-        </div>
-        <div class="header-actions">
-          <div class="system-status">
-            <div class="status-indicator online"></div>
-            <span>ONLINE</span>
-          </div>
-          <button @click="logout" class="logout-btn">
-            <i class="fas fa-sign-out-alt"></i>
-            SAIR
-          </button>
-        </div>
-      </div>
-      <div class="header-glow"></div>
-    </header>
-
-    <div class="canonika-layout">
-      <!-- Sidebar futurista -->
-      <nav class="canonika-sidebar">
-        <div class="sidebar-header">
-          <div class="nav-icon active">
-            <i class="nav-dot"></i>
-            <span>SEGURANÇA</span>
-          </div>
-        </div>
-        <ul class="nav-menu">
-          <li class="nav-item" :class="{ active: currentView === 'dashboard' }">
-            <div class="nav-link" @click="setView('dashboard')">
-              <div class="nav-icon">
-                <i class="fas fa-tachometer-alt"></i>
-              </div>
-              <div class="nav-text">
-                <span class="nav-title">Dashboard</span>
-              </div>
-            </div>
-          </li>
-          <li class="nav-item" :class="{ active: currentView === 'keycloak' }">
-            <div class="nav-link" @click="setView('keycloak')">
-              <div class="nav-icon">
-                <i class="fas fa-users-cog"></i>
-              </div>
-              <div class="nav-text">
-                <span class="nav-title">Keycloak Admin</span>
-                <span class="service-subtitle">Gestão de Usuários</span>
-              </div>
-            </div>
-          </li>
-          <li class="nav-item" :class="{ active: currentView === 'autenticacao' }">
-            <div class="nav-link" @click="setView('autenticacao')">
-              <div class="nav-icon">
-                <i class="fas fa-key"></i>
-              </div>
-              <div class="nav-text">
-                <span class="nav-title">Autenticação</span>
-                <span class="service-subtitle">Login & MFA</span>
-              </div>
-            </div>
-          </li>
-          <li class="nav-item" :class="{ active: currentView === 'autorizacao' }">
-            <div class="nav-link" @click="setView('autorizacao')">
-              <div class="nav-icon">
-                <i class="fas fa-shield-alt"></i>
-              </div>
-              <div class="nav-text">
-                <span class="nav-title">Autorização</span>
-                <span class="service-subtitle">OPA & Políticas</span>
-              </div>
-            </div>
-          </li>
-          <li class="nav-item" :class="{ active: currentView === 'sessoes' }">
-            <div class="nav-link" @click="setView('sessoes')">
-              <div class="nav-icon">
-                <i class="fas fa-clock"></i>
-              </div>
-              <div class="nav-text">
-                <span class="nav-title">Sessões</span>
-                <span class="service-subtitle">Controle Ativo</span>
-              </div>
-            </div>
-          </li>
-          <li class="nav-item" :class="{ active: currentView === 'auditoria' }">
-            <div class="nav-link" @click="setView('auditoria')">
-              <div class="nav-icon">
-                <i class="fas fa-file-alt"></i>
-              </div>
-              <div class="nav-text">
-                <span class="nav-title">Auditoria</span>
-                <span class="service-subtitle">Logs & Relatórios</span>
-              </div>
-            </div>
-          </li>
-        </ul>
-      </nav>
-
-      <!-- Main Content -->
-      <main class="canonika-main">
+  <MasterPage 
+    :serviceConfig="serviceConfig"
+    @view-changed="handleViewChange"
+    @login="handleLogin"
+    @logout="handleLogout"
+  >
            <!-- Dashboard -->
        <div v-if="currentView === 'dashboard'" class="canonika-view">
          <div class="view-header">
@@ -278,18 +176,66 @@
              </div>
            </div>
          </div>
-       </div>
-     </main>
-   </div>
- </div>
+               </div>
+      </MasterPage>
 </template>
 
 <script>
+import MasterPage from './components/MasterPage.vue'
+
 export default {
   name: 'App',
+  components: {
+    MasterPage
+  },
   data() {
     return {
       currentView: 'dashboard',
+      
+      // Configuração do serviço Guardian
+      serviceConfig: {
+        name: 'GUARDIAN',
+        description: 'Sistema de Segurança e Autenticação',
+        iconClass: 'fas fa-shield-alt',
+        menuItems: [
+          {
+            id: 'dashboard',
+            title: 'Dashboard',
+            icon: 'fas fa-tachometer-alt',
+            subtitle: 'Visão Geral'
+          },
+          {
+            id: 'keycloak',
+            title: 'Keycloak Admin',
+            icon: 'fas fa-users-cog',
+            subtitle: 'Gestão de Usuários'
+          },
+          {
+            id: 'autenticacao',
+            title: 'Autenticação',
+            icon: 'fas fa-key',
+            subtitle: 'Login & MFA'
+          },
+          {
+            id: 'autorizacao',
+            title: 'Autorização',
+            icon: 'fas fa-shield-alt',
+            subtitle: 'OPA & Políticas'
+          },
+          {
+            id: 'sessoes',
+            title: 'Sessões',
+            icon: 'fas fa-clock',
+            subtitle: 'Controle Ativo'
+          },
+          {
+            id: 'auditoria',
+            title: 'Auditoria',
+            icon: 'fas fa-file-alt',
+            subtitle: 'Logs & Relatórios'
+          }
+        ]
+      },
       
       user: {
         id: 'admin-001',
@@ -329,11 +275,18 @@ export default {
   },
   
   methods: {
-    setView(view) {
-      this.currentView = view
+    handleViewChange(viewId) {
+      this.currentView = viewId
     },
     
-    logout() {
+    handleLogin(user) {
+      this.user = user
+      console.log('Usuário logado:', user)
+    },
+    
+    handleLogout() {
+      this.user = null
+      console.log('Usuário deslogado')
       // Redirecionar para Quarter (ponto de entrada)
       window.location.href = 'http://localhost:3704'
     },

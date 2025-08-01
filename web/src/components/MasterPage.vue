@@ -54,7 +54,7 @@
         <div class="sidebar-header">
           <div class="nav-icon active">
             <i class="nav-dot"></i>
-            <span v-if="!sidebarCollapsed">SEGURANÇA</span>
+            <span v-if="!sidebarCollapsed">NAVEGAÇÃO</span>
           </div>
         </div>
         
@@ -199,12 +199,10 @@ export default {
       this.$set(this.openSubmenus, menuId, !this.openSubmenus[menuId])
     },
     login() {
-      // Simular login para desenvolvimento
+      // Simular login
       this.user = {
-        id: 'admin-001',
-        name: 'Administrador',
-        email: 'admin@canonika.io',
-        roles: ['admin', 'security_admin']
+        name: this.loginForm.username,
+        role: 'admin'
       }
       this.$emit('login', this.user)
     },
@@ -212,55 +210,40 @@ export default {
       this.user = null
       this.$emit('logout')
     }
+  },
+  mounted() {
+    // Inicializar submenus fechados
+    this.serviceConfig.menuItems.forEach(item => {
+      if (item.submenu) {
+        this.$set(this.openSubmenus, item.id, false)
+      }
+    })
   }
 }
 </script>
 
 <style scoped>
-/* Reset CSS Universal */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html, body {
-  margin: 0 !important;
-  padding: 0 !important;
-  border: none !important;
-}
-
-/* Layout Principal */
+/* Estilos específicos do MasterPage */
 .canonika-app {
   min-height: 100vh;
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   color: #e2e8f0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Header Futurista */
 .canonika-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-  padding: 0.75rem 0;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border-bottom: 1px solid #475569;
+  position: relative;
+  overflow: hidden;
 }
 
 .header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 1rem 2rem;
+  position: relative;
+  z-index: 2;
 }
 
 .logo-section {
@@ -271,16 +254,16 @@ html, body {
 
 .logo-icon {
   position: relative;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 3rem;
+  height: 3rem;
 }
 
 .logo-hexagon {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  position: relative;
+  animation: rotate 10s linear infinite;
 }
 
 .logo-pulse {
@@ -288,56 +271,20 @@ html, body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 0.5rem;
-  height: 0.5rem;
-  background: #ffffff;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: rgba(59, 130, 246, 0.3);
   border-radius: 50%;
   animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { 
-    opacity: 1; 
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% { 
-    opacity: 0.7; 
-    transform: translate(-50%, -50%) scale(1.2);
-  }
-}
-
-.logo-text-container {
-  display: flex;
-  flex-direction: column;
 }
 
 .logo-text {
   font-size: 1.5rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-clip: text;
   margin: 0;
-}
-
-.module-title-with-icon {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
-}
-
-.module-icon {
-  width: 1rem;
-  height: 1rem;
-  background: linear-gradient(135deg, #10b981, #059669);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.5rem;
-  color: white;
 }
 
 .logo-subtitle {
@@ -349,130 +296,104 @@ html, body {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .user-avatar {
   width: 2rem;
   height: 2rem;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
   font-weight: 600;
-  font-size: 0.875rem;
+  color: white;
 }
 
 .user-name {
-  color: #e2e8f0;
   font-weight: 500;
-}
-
-.user-menu {
-  position: relative;
+  color: #e2e8f0;
 }
 
 .logout-btn {
   background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
   color: #ef4444;
-  border: 1px solid #ef4444;
   padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
+  border-radius: 0.5rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
 .logout-btn:hover {
-  background: #ef4444;
-  color: white;
+  background: rgba(239, 68, 68, 0.2);
 }
 
 .system-status {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid #10b981;
-  border-radius: 6px;
-  font-size: 0.875rem;
   color: #10b981;
+  font-weight: 500;
 }
 
 .status-indicator {
   width: 0.5rem;
   height: 0.5rem;
+  background: #10b981;
   border-radius: 50%;
   animation: pulse 2s ease-in-out infinite;
 }
 
-.status-indicator.online {
-  background: #10b981;
-}
-
 .header-glow {
   position: absolute;
-  bottom: 0;
+  top: 0;
   left: 0;
   right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(29, 78, 216, 0.1) 100%);
+  pointer-events: none;
 }
 
-/* Layout Principal */
 .canonika-layout {
   display: flex;
-  min-height: 100vh;
-  padding-top: 4rem;
+  min-height: calc(100vh - 4rem);
 }
 
-/* Sidebar Toggle */
 .sidebar-toggle {
   position: fixed;
   top: 5rem;
   left: 1rem;
-  z-index: 999;
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  color: #e2e8f0;
+  z-index: 1000;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
   padding: 0.5rem;
-  border-radius: 6px;
+  border-radius: 0.5rem;
   cursor: pointer;
-  transition: all 0.3s;
-  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
 }
 
 .sidebar-toggle:hover {
-  background: rgba(59, 130, 246, 0.1);
-  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.2);
 }
 
-.sidebar-toggle.sidebar-collapsed {
-  left: 1rem;
-}
-
-/* Sidebar Futurista */
 .canonika-sidebar {
   width: 280px;
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(10px);
-  border-right: 1px solid rgba(148, 163, 184, 0.1);
-  padding: 1rem 0;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border-right: 1px solid #475569;
   transition: all 0.3s ease;
   overflow-y: auto;
-  height: calc(100vh - 4rem);
 }
 
 .canonika-sidebar.sidebar-collapsed {
@@ -480,12 +401,11 @@ html, body {
 }
 
 .sidebar-header {
-  padding: 0 1rem 1rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-  margin-bottom: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid #475569;
 }
 
-.nav-icon.active {
+.nav-icon {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -497,8 +417,8 @@ html, body {
 }
 
 .nav-dot {
-  width: 0.25rem;
-  height: 0.25rem;
+  width: 0.5rem;
+  height: 0.5rem;
   background: #3b82f6;
   border-radius: 50%;
 }
@@ -510,18 +430,18 @@ html, body {
 }
 
 .nav-item {
-  margin: 0.25rem 0;
+  margin: 0;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
+  gap: 0.75rem;
   padding: 0.75rem 1rem;
   color: #94a3b8;
   text-decoration: none;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   cursor: pointer;
-  position: relative;
 }
 
 .nav-link:hover {
@@ -530,7 +450,7 @@ html, body {
 }
 
 .nav-item.active .nav-link {
-  background: rgba(59, 130, 246, 0.15);
+  background: rgba(59, 130, 246, 0.2);
   color: #3b82f6;
   border-right: 2px solid #3b82f6;
 }
@@ -541,18 +461,17 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 0.75rem;
-  font-size: 0.875rem;
+  flex-shrink: 0;
 }
 
 .nav-text {
   flex: 1;
-  display: flex;
-  flex-direction: column;
+  min-width: 0;
 }
 
 .nav-title {
   font-weight: 500;
+  color: inherit;
   font-size: 0.875rem;
 }
 
@@ -563,51 +482,58 @@ html, body {
 }
 
 .submenu-icon {
-  font-size: 0.75rem;
-  transition: transform 0.2s;
+  margin-left: auto;
+  transition: transform 0.2s ease;
+}
+
+.nav-item.active .submenu-icon {
+  transform: rotate(90deg);
 }
 
 .submenu {
   list-style: none;
-  padding-left: 2.5rem;
+  padding: 0;
+  margin: 0;
+  background: rgba(15, 23, 42, 0.5);
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s ease;
 }
 
 .submenu.show {
-  max-height: 200px;
+  max-height: 500px;
 }
 
-/* Main Content */
+.submenu .nav-link {
+  padding-left: 2.5rem;
+  font-size: 0.875rem;
+}
+
 .canonika-main {
   flex: 1;
   padding: 2rem;
-  transition: all 0.3s ease;
+  transition: margin-left 0.3s ease;
 }
 
 .canonika-main.sidebar-collapsed {
-  margin-left: 0;
+  margin-left: 4rem;
 }
 
-/* Login Container */
 .login-container {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: calc(100vh - 4rem);
-  padding: 2rem;
 }
 
 .login-card {
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 12px;
-  padding: 2.5rem;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border: 1px solid #475569;
+  border-radius: 1rem;
+  padding: 2rem;
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
 }
 
 .login-header {
@@ -625,9 +551,9 @@ html, body {
 .logo-hexagon-large {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  position: relative;
+  animation: rotate 10s linear infinite;
 }
 
 .logo-pulse-large {
@@ -635,50 +561,34 @@ html, body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 0.5rem;
-  height: 0.5rem;
-  background: #ffffff;
+  width: 2rem;
+  height: 2rem;
+  background: rgba(59, 130, 246, 0.3);
   border-radius: 50%;
-  z-index: 2;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-@keyframes pulse-glow {
-  0%, 100% { 
-    opacity: 1; 
-    transform: translate(-50%, -50%) scale(1);
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
-  }
-  50% { 
-    opacity: 0.7; 
-    transform: translate(-50%, -50%) scale(1.2);
-    box-shadow: 0 0 16px rgba(255, 255, 255, 1);
-  }
+  animation: pulse 2s ease-in-out infinite;
 }
 
 .login-title {
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #e2e8f0;
-  margin-bottom: 0.5rem;
+  margin: 0 0 0.5rem;
 }
 
 .login-subtitle {
   color: #94a3b8;
-  font-size: 0.875rem;
+  margin: 0;
 }
 
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
 }
 
 .input-container {
@@ -690,19 +600,19 @@ html, body {
 .input-icon {
   position: absolute;
   left: 1rem;
-  color: #94a3b8;
-  font-size: 1rem;
+  color: #64748b;
+  z-index: 1;
 }
 
 .form-input {
   width: 100%;
   padding: 0.75rem 1rem 0.75rem 2.5rem;
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid #475569;
+  border-radius: 0.5rem;
   color: #e2e8f0;
   font-size: 0.875rem;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .form-input:focus {
@@ -711,20 +621,15 @@ html, body {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.form-input::placeholder {
-  color: #64748b;
-}
-
 .login-btn {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  color: white;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   border: none;
-  padding: 0.875rem 1.5rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -733,11 +638,46 @@ html, body {
 
 .login-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-/* Service Content */
 .service-content {
   width: 100%;
+}
+
+/* Animações */
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .canonika-sidebar {
+    position: fixed;
+    top: 4rem;
+    left: 0;
+    height: calc(100vh - 4rem);
+    z-index: 1000;
+    transform: translateX(-100%);
+  }
+  
+  .canonika-sidebar:not(.sidebar-collapsed) {
+    transform: translateX(0);
+  }
+  
+  .canonika-main {
+    margin-left: 0;
+    padding: 1rem;
+  }
+  
+  .sidebar-toggle {
+    display: flex;
+  }
 }
 </style> 
