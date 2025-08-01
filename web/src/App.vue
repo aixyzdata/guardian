@@ -1,241 +1,295 @@
 <template>
-  <MasterPage 
-    :serviceConfig="serviceConfig"
-    @view-changed="handleViewChange"
-    @login="handleLogin"
-    @logout="handleLogout"
-  >
-    <!-- Dashboard -->
-    <div v-if="currentView === 'dashboard'" class="canonika-view">
-      <div class="view-header">
-        <h2 class="view-title">Dashboard de Segurança</h2>
-        <p class="view-subtitle">Monitoramento em tempo real do sistema</p>
-      </div>
-
-      <div class="dashboard-grid">
-        <!-- Status dos Serviços -->
-        <div class="canonika-card">
-          <div class="card-header">
-            <h3 class="card-title">Status dos Serviços</h3>
-            <button @click="refreshStatus" class="refresh-btn">
-              <i class="fas fa-sync-alt"></i>
-            </button>
+  <div class="canonika-app">
+    <!-- Header futurista -->
+    <header class="canonika-header">
+      <div class="header-content">
+        <div class="logo-section">
+          <div class="logo-icon">
+            <div class="logo-hexagon"></div>
+            <div class="logo-pulse"></div>
           </div>
-          <div class="card-content">
-            <div class="service-status" v-for="service in serviceStatus" :key="service.name">
-              <div class="service-info">
-                <div class="service-icon">
-                  <i :class="service.icon"></i>
-                </div>
-                <div class="service-details">
-                  <span class="service-name">{{ service.name }}</span>
-                  <span class="service-status" :class="service.status">{{ service.statusText }}</span>
-                </div>
+          <div class="logo-text-container">
+            <h1 class="logo-text">CANONIKA</h1>
+            <span class="logo-subtitle">GUARDIAN</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <div class="system-status">
+            <div class="status-indicator online"></div>
+            <span>ONLINE</span>
+          </div>
+          <button @click="logout" class="logout-btn">
+            <i class="fas fa-sign-out-alt"></i>
+            SAIR
+          </button>
+        </div>
+      </div>
+      <div class="header-glow"></div>
+    </header>
+
+    <div class="canonika-layout">
+      <!-- Sidebar futurista -->
+      <nav class="canonika-sidebar">
+        <div class="sidebar-header">
+          <div class="nav-icon active">
+            <i class="nav-dot"></i>
+            <span>SEGURANÇA</span>
+          </div>
+        </div>
+        <ul class="nav-menu">
+          <li class="nav-item" :class="{ active: currentView === 'dashboard' }">
+            <div class="nav-link" @click="setView('dashboard')">
+              <div class="nav-icon">
+                <i class="fas fa-tachometer-alt"></i>
+              </div>
+              <div class="nav-text">
+                <span class="nav-title">Dashboard</span>
               </div>
             </div>
-          </div>
-        </div>
-
-        <!-- Ações Rápidas -->
-        <div class="canonika-card">
-          <div class="card-header">
-            <h3 class="card-title">Ações Rápidas</h3>
-          </div>
-          <div class="card-content">
-            <div class="quick-actions">
-              <button @click="openKeycloakAdmin" class="canonika-btn canonika-btn-primary">
+          </li>
+          <li class="nav-item" :class="{ active: currentView === 'keycloak' }">
+            <div class="nav-link" @click="setView('keycloak')">
+              <div class="nav-icon">
                 <i class="fas fa-users-cog"></i>
-                Keycloak Admin
-              </button>
-              <button @click="openOPA" class="canonika-btn canonika-btn-secondary">
-                <i class="fas fa-shield-alt"></i>
-                OPA Console
-              </button>
-              <button @click="viewAuditLogs" class="canonika-btn canonika-btn-secondary">
-                <i class="fas fa-file-alt"></i>
-                Logs de Auditoria
-              </button>
+              </div>
+              <div class="nav-text">
+                <span class="nav-title">Keycloak Admin</span>
+                <span class="service-subtitle">Gestão de Usuários</span>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Autenticação -->
-    <div v-if="currentView === 'autenticacao'" class="canonika-view">
-      <div class="view-header">
-        <h2 class="view-title">Sistema de Autenticação</h2>
-        <p class="view-subtitle">Configurações de login e segurança</p>
-      </div>
-
-      <div class="auth-container">
-        <div class="canonika-card">
-          <div class="card-header">
-            <h3 class="card-title">Configurações de Segurança</h3>
-          </div>
-          <div class="card-content">
-            <div class="auth-method">
-              <div class="method-icon">
+          </li>
+          <li class="nav-item" :class="{ active: currentView === 'autenticacao' }">
+            <div class="nav-link" @click="setView('autenticacao')">
+              <div class="nav-icon">
                 <i class="fas fa-key"></i>
               </div>
-              <div class="method-info">
-                <span class="method-name">Autenticação OAuth/OIDC</span>
-                <span class="method-status enabled">Ativo</span>
-              </div>
-              <button @click="toggleAuthMethod" class="canonika-btn canonika-btn-small">
-                Configurar
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Autorização -->
-    <div v-if="currentView === 'autorizacao'" class="canonika-view">
-      <div class="view-header">
-        <h2 class="view-title">Sistema de Autorização</h2>
-        <p class="view-subtitle">Políticas OPA e controle de acesso</p>
-      </div>
-
-      <div class="authorization-container">
-        <div class="canonika-card">
-          <div class="card-header">
-            <h3 class="card-title">Status do OPA</h3>
-          </div>
-          <div class="card-content">
-            <div class="policy-status">
-              <div class="status-item">
-                <span class="status-label">Políticas Carregadas</span>
-                <span class="status-value">{{ opaStats.loadedPolicies }}</span>
-              </div>
-              <div class="status-item">
-                <span class="status-label">Decisões/min</span>
-                <span class="status-value">{{ opaStats.decisionsPerMinute }}</span>
+              <div class="nav-text">
+                <span class="nav-title">Autenticação</span>
+                <span class="service-subtitle">Login & MFA</span>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Sessões -->
-    <div v-if="currentView === 'sessoes'" class="canonika-view">
-      <div class="view-header">
-        <h2 class="view-title">Sessões Ativas</h2>
-        <p class="view-subtitle">Controle de sessões em tempo real</p>
-      </div>
-
-      <div class="sessions-container">
-        <div class="canonika-card">
-          <div class="card-header">
-            <h3 class="card-title">Sessões Ativas</h3>
-            <button @click="refreshSessions" class="refresh-btn">
-              <i class="fas fa-sync-alt"></i>
-            </button>
-          </div>
-          <div class="card-content">
-            <div class="session-item" v-for="session in activeSessions" :key="session.id">
-              <div class="session-info">
-                <span class="session-user">{{ session.user }}</span>
-                <span class="session-ip">{{ session.ip }}</span>
-                <span class="session-time">{{ session.lastActivity }}</span>
+          </li>
+          <li class="nav-item" :class="{ active: currentView === 'autorizacao' }">
+            <div class="nav-link" @click="setView('autorizacao')">
+              <div class="nav-icon">
+                <i class="fas fa-shield-alt"></i>
               </div>
-              <button @click="terminateSession(session.id)" class="canonika-btn canonika-btn-danger">
-                Encerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Auditoria -->
-    <div v-if="currentView === 'auditoria'" class="canonika-view">
-      <div class="view-header">
-        <h2 class="view-title">Logs de Auditoria</h2>
-        <p class="view-subtitle">Histórico de eventos do sistema</p>
-      </div>
-
-      <div class="audit-container">
-        <div class="canonika-card">
-          <div class="card-header">
-            <h3 class="card-title">Eventos Recentes</h3>
-          </div>
-          <div class="card-content">
-            <div class="audit-event" v-for="event in auditEvents" :key="event.id" :class="event.level">
-              <div class="event-icon">
-                <i :class="event.icon"></i>
-              </div>
-              <div class="event-details">
-                <span class="event-message">{{ event.message }}</span>
-                <span class="event-user">{{ event.user }}</span>
-                <span class="event-time">{{ event.timestamp }}</span>
+              <div class="nav-text">
+                <span class="nav-title">Autorização</span>
+                <span class="service-subtitle">OPA & Políticas</span>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </MasterPage>
+          </li>
+          <li class="nav-item" :class="{ active: currentView === 'sessoes' }">
+            <div class="nav-link" @click="setView('sessoes')">
+              <div class="nav-icon">
+                <i class="fas fa-clock"></i>
+              </div>
+              <div class="nav-text">
+                <span class="nav-title">Sessões</span>
+                <span class="service-subtitle">Controle Ativo</span>
+              </div>
+            </div>
+          </li>
+          <li class="nav-item" :class="{ active: currentView === 'auditoria' }">
+            <div class="nav-link" @click="setView('auditoria')">
+              <div class="nav-icon">
+                <i class="fas fa-file-alt"></i>
+              </div>
+              <div class="nav-text">
+                <span class="nav-title">Auditoria</span>
+                <span class="service-subtitle">Logs & Relatórios</span>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Main Content -->
+      <main class="canonika-main">
+           <!-- Dashboard -->
+       <div v-if="currentView === 'dashboard'" class="canonika-view">
+         <div class="view-header">
+           <h2 class="view-title">Dashboard de Segurança</h2>
+           <p class="view-subtitle">Monitoramento em tempo real do sistema</p>
+         </div>
+
+         <div class="dashboard-grid">
+           <!-- Status dos Serviços -->
+           <div class="canonika-card">
+             <div class="card-header">
+               <h3 class="card-title">Status dos Serviços</h3>
+               <button @click="refreshStatus" class="refresh-btn">
+                 <i class="fas fa-sync-alt"></i>
+               </button>
+             </div>
+             <div class="card-content">
+               <div class="service-status" v-for="service in serviceStatus" :key="service.name">
+                 <div class="service-info">
+                   <div class="service-icon">
+                     <i :class="service.icon"></i>
+                   </div>
+                   <div class="service-details">
+                     <span class="service-name">{{ service.name }}</span>
+                     <span class="service-status" :class="service.status">{{ service.statusText }}</span>
+                   </div>
+                 </div>
+               </div>
+             </div>
+           </div>
+
+           <!-- Ações Rápidas -->
+           <div class="canonika-card">
+             <div class="card-header">
+               <h3 class="card-title">Ações Rápidas</h3>
+             </div>
+             <div class="card-content">
+               <div class="quick-actions">
+                 <button @click="openKeycloakAdmin" class="canonika-btn canonika-btn-primary">
+                   <i class="fas fa-users-cog"></i>
+                   Keycloak Admin
+                 </button>
+                 <button @click="openOPA" class="canonika-btn canonika-btn-secondary">
+                   <i class="fas fa-shield-alt"></i>
+                   OPA Console
+                 </button>
+                 <button @click="viewAuditLogs" class="canonika-btn canonika-btn-secondary">
+                   <i class="fas fa-file-alt"></i>
+                   Logs de Auditoria
+                 </button>
+               </div>
+             </div>
+           </div>
+         </div>
+       </div>
+
+       <!-- Autenticação -->
+       <div v-if="currentView === 'autenticacao'" class="canonika-view">
+         <div class="view-header">
+           <h2 class="view-title">Sistema de Autenticação</h2>
+           <p class="view-subtitle">Configurações de login e segurança</p>
+         </div>
+
+         <div class="auth-container">
+           <div class="canonika-card">
+             <div class="card-header">
+               <h3 class="card-title">Configurações de Segurança</h3>
+             </div>
+             <div class="card-content">
+               <div class="auth-method">
+                 <div class="method-icon">
+                   <i class="fas fa-key"></i>
+                 </div>
+                 <div class="method-info">
+                   <span class="method-name">Autenticação OAuth/OIDC</span>
+                   <span class="method-status enabled">Ativo</span>
+                 </div>
+                 <button @click="toggleAuthMethod" class="canonika-btn canonika-btn-small">
+                   Configurar
+                 </button>
+               </div>
+             </div>
+           </div>
+         </div>
+       </div>
+
+       <!-- Autorização -->
+       <div v-if="currentView === 'autorizacao'" class="canonika-view">
+         <div class="view-header">
+           <h2 class="view-title">Sistema de Autorização</h2>
+           <p class="view-subtitle">Políticas OPA e controle de acesso</p>
+         </div>
+
+         <div class="authorization-container">
+           <div class="canonika-card">
+             <div class="card-header">
+               <h3 class="card-title">Status do OPA</h3>
+             </div>
+             <div class="card-content">
+               <div class="policy-status">
+                 <div class="status-item">
+                   <span class="status-label">Políticas Carregadas</span>
+                   <span class="status-value">{{ opaStats.loadedPolicies }}</span>
+                 </div>
+                 <div class="status-item">
+                   <span class="status-label">Decisões/min</span>
+                   <span class="status-value">{{ opaStats.decisionsPerMinute }}</span>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </div>
+       </div>
+
+       <!-- Sessões -->
+       <div v-if="currentView === 'sessoes'" class="canonika-view">
+         <div class="view-header">
+           <h2 class="view-title">Sessões Ativas</h2>
+           <p class="view-subtitle">Controle de sessões em tempo real</p>
+         </div>
+
+         <div class="sessions-container">
+           <div class="canonika-card">
+             <div class="card-header">
+               <h3 class="card-title">Sessões Ativas</h3>
+               <button @click="refreshSessions" class="refresh-btn">
+                 <i class="fas fa-sync-alt"></i>
+               </button>
+             </div>
+             <div class="card-content">
+               <div class="session-item" v-for="session in activeSessions" :key="session.id">
+                 <div class="session-info">
+                   <span class="session-user">{{ session.user }}</span>
+                   <span class="session-ip">{{ session.ip }}</span>
+                   <span class="session-time">{{ session.lastActivity }}</span>
+                 </div>
+                 <button @click="terminateSession(session.id)" class="canonika-btn canonika-btn-danger">
+                   Encerrar
+                 </button>
+               </div>
+             </div>
+           </div>
+         </div>
+       </div>
+
+       <!-- Auditoria -->
+       <div v-if="currentView === 'auditoria'" class="canonika-view">
+         <div class="view-header">
+           <h2 class="view-title">Logs de Auditoria</h2>
+           <p class="view-subtitle">Histórico de eventos do sistema</p>
+         </div>
+
+         <div class="audit-container">
+           <div class="canonika-card">
+             <div class="card-header">
+               <h3 class="card-title">Eventos Recentes</h3>
+             </div>
+             <div class="card-content">
+               <div class="audit-event" v-for="event in auditEvents" :key="event.id" :class="event.level">
+                 <div class="event-icon">
+                   <i :class="event.icon"></i>
+                 </div>
+                 <div class="event-details">
+                   <span class="event-message">{{ event.message }}</span>
+                   <span class="event-user">{{ event.user }}</span>
+                   <span class="event-time">{{ event.timestamp }}</span>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </div>
+       </div>
+     </main>
+   </div>
+ </div>
 </template>
 
 <script>
-import MasterPage from './components/MasterPage.vue'
-
 export default {
   name: 'App',
-  components: {
-    MasterPage
-  },
   data() {
     return {
       currentView: 'dashboard',
-      
-      // Configuração do serviço Guardian
-      serviceConfig: {
-        name: 'GUARDIAN',
-        description: 'Sistema de Segurança e Autenticação',
-        iconClass: 'fas fa-shield-alt',
-        menuItems: [
-          {
-            id: 'dashboard',
-            title: 'Dashboard',
-            icon: 'fas fa-tachometer-alt',
-            subtitle: 'Visão Geral'
-          },
-          {
-            id: 'keycloak',
-            title: 'Keycloak Admin',
-            icon: 'fas fa-users-cog',
-            subtitle: 'Gestão de Usuários'
-          },
-          {
-            id: 'autenticacao',
-            title: 'Autenticação',
-            icon: 'fas fa-key',
-            subtitle: 'Login & MFA'
-          },
-          {
-            id: 'autorizacao',
-            title: 'Autorização',
-            icon: 'fas fa-shield-alt',
-            subtitle: 'OPA & Políticas'
-          },
-          {
-            id: 'sessoes',
-            title: 'Sessões',
-            icon: 'fas fa-clock',
-            subtitle: 'Controle Ativo'
-          },
-          {
-            id: 'auditoria',
-            title: 'Auditoria',
-            icon: 'fas fa-file-alt',
-            subtitle: 'Logs & Relatórios'
-          }
-        ]
-      },
       
       user: {
         id: 'admin-001',
@@ -275,20 +329,13 @@ export default {
   },
   
   methods: {
-    handleViewChange(viewId) {
-      this.currentView = viewId
+    setView(view) {
+      this.currentView = view
     },
     
-    handleLogin(user) {
-      this.user = user
-      console.log('Usuário logado:', user)
-    },
-    
-    handleLogout() {
-      this.user = null
-      console.log('Usuário deslogado')
-      // Implementar logout via Keycloak
-      window.location.href = 'http://localhost:8080/auth/realms/canonika/protocol/openid-connect/logout'
+    logout() {
+      // Redirecionar para Quarter (ponto de entrada)
+      window.location.href = 'http://localhost:3704'
     },
     
     refreshStatus() {
