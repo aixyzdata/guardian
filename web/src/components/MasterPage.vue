@@ -245,6 +245,11 @@ export default {
         this.$set(this.openSubmenus, item.id, false)
       }
     })
+    
+    // Redirecionar automaticamente para Quarter se não tem login próprio e não está autenticado
+    if (!this.hasLogin && !this.user) {
+      this.redirectToQuarter()
+    }
   }
 }
 </script>
