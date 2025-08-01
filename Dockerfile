@@ -26,5 +26,5 @@ RUN echo '#!/bin/sh' > /start.sh && \
     echo 'fi' >> /start.sh && \
     echo 'wait' >> /start.sh && \
     chmod +x /start.sh
-EXPOSE 3705 5175
+EXPOSE 3705 8005 5175
 CMD ["/start.sh"] 
