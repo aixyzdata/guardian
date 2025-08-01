@@ -235,7 +235,7 @@ export default {
       this.$emit('logout')
     },
     redirectToQuarter() {
-      window.location.href = 'http://localhost:3704'
+      window.location.href = 'http://localhost'
     }
   },
   mounted() {
